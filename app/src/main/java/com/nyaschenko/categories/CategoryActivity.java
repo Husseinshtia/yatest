@@ -1,16 +1,28 @@
 package com.nyaschenko.categories;
 
+import android.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
-public class CategoryActivity extends AppCompatActivity {
+public class CategoryActivity extends AppCompatActivity implements CategoryFragment.OnFragmentInteractionListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_category);
+
+        Fragment fragment = CategoryFragment.newInstance(-1);
+        getFragmentManager().beginTransaction()
+                .add(R.id.fragment_container, fragment)
+                .commit();
+    }
+
+    @Override
+    public void onFragmentInteraction(String id) {
+        Log.d("CATEGORY", "fragment interaction: " + id);
     }
 
     /*
