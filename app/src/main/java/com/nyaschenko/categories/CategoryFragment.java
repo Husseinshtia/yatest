@@ -1,18 +1,25 @@
 package com.nyaschenko.categories;
 
 import android.app.Activity;
+import android.app.ListFragment;
+import android.app.LoaderManager;
+import android.content.Context;
+import android.content.CursorLoader;
+import android.content.Loader;
+import android.database.Cursor;
 import android.os.Bundle;
-import android.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
+import android.widget.CursorAdapter;
 import android.widget.ListAdapter;
+import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
-import com.nyaschenko.categories.dummy.DummyContent;
+import com.nyaschenko.categories.provider.CategoryContract;
 
 /**
  * A fragment representing a list of Items.
@@ -23,24 +30,18 @@ import com.nyaschenko.categories.dummy.DummyContent;
  * Activities containing this fragment MUST implement the {@link OnFragmentInteractionListener}
  * interface.
  */
-public class CategoryFragment extends Fragment implements AbsListView.OnItemClickListener {
+public class CategoryFragment extends ListFragment implements
+        AbsListView.OnItemClickListener, LoaderManager.LoaderCallbacks<Cursor> {
 
-    private static final String ARG_PARENT_ID = "parent_id";
+    public static final String ARG_PARENT_ID = "parent_id";
+    private static final int LOADER_CATEGORIES = 1;
 
     private long parentId;
 
     private OnFragmentInteractionListener mListener;
 
-    /**
-     * The fragment's ListView/GridView.
-     */
     private AbsListView mListView;
-
-    /**
-     * The Adapter which will be used to populate the ListView/GridView with
-     * Views.
-     */
-    private ListAdapter mAdapter;
+    private CursorAdapter mAdapter;
 
     public static CategoryFragment newInstance(long parentId) {
         CategoryFragment fragment = new CategoryFragment();
@@ -61,28 +62,56 @@ public class CategoryFragment extends Fragment implements AbsListView.OnItemClic
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        setRetainInstance(true);
         if (getArguments() != null) {
             parentId = getArguments().getLong(ARG_PARENT_ID, -1);
         }
-
-        // TODO: Change Adapter to display your content
-        mAdapter = new ArrayAdapter<DummyContent.DummyItem>(getActivity(),
-                android.R.layout.simple_list_item_1, android.R.id.text1, DummyContent.ITEMS);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_category, container, false);
-
-        // Set the adapter
-        mListView = (AbsListView) view.findViewById(android.R.id.list);
-        ((AdapterView<ListAdapter>) mListView).setAdapter(mAdapter);
-
-        // Set OnItemClickListener so we can be notified on item clicks
-        mListView.setOnItemClickListener(this);
-
         return view;
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        mListView = getListView();
+        mListView.setAdapter(mAdapter);
+        mListView.setOnItemClickListener(this);
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        mAdapter = new CursorAdapter(getActivity(), null, false) {
+
+            @Override
+            public View newView(Context context, Cursor cursor, ViewGroup parent) {
+                return LayoutInflater.from(context).inflate(
+                        android.R.layout.simple_list_item_activated_2, parent, false);
+            }
+
+            @Override
+            public void bindView(View view, Context context, Cursor cursor) {
+                final String title = cursor.getString(cursor.getColumnIndex(CategoryContract.CategoryColumns.CATEGORY_TITLE));
+                final TextView textView = (TextView) view.findViewById(android.R.id.text1);
+                textView.setText(title);
+
+                final String id = cursor.getString(cursor.getColumnIndex(CategoryContract.CategoryColumns.CATEGORY_ID));
+                final TextView textView2 = (TextView) view.findViewById(android.R.id.text2);
+                textView2.setText(id);
+            }
+        };
+
+        setListAdapter(mAdapter);
+
+        getLoaderManager().initLoader(LOADER_CATEGORIES, Bundle.EMPTY, this);
+
     }
 
     @Override
@@ -107,7 +136,7 @@ public class CategoryFragment extends Fragment implements AbsListView.OnItemClic
         if (null != mListener) {
             // Notify the active callbacks interface (the activity, if the
             // fragment is attached to one) that an item has been selected.
-            mListener.onFragmentInteraction(DummyContent.ITEMS.get(position).id);
+            mListener.onFragmentInteraction(id);
         }
     }
 
@@ -124,6 +153,36 @@ public class CategoryFragment extends Fragment implements AbsListView.OnItemClic
         }
     }
 
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        switch (id) {
+            case LOADER_CATEGORIES:
+                Log.d("CATEGORY", "parentdId: " + parentId);
+                final String selection = CategoryContract.CategoryColumns.CATEGORY_PARENT +
+                        (parentId == -1 ? " IS NULL" : " = ?");
+                final String[] selectionArgs = parentId == -1 ? null : new String[]{ Long.toString(parentId) };
+                return new CursorLoader(
+                        getActivity(),
+                        CategoryContract.Category.CONTENT_URI,
+                        CategoryContract.Category.ALL_COLUMNS,
+                        selection,
+                        selectionArgs,
+                        null);
+            default:
+                throw new IllegalArgumentException("Illegal loader id: " + id);
+        }
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        mAdapter.swapCursor(data);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+
+    }
+
     /**
      * This interface must be implemented by activities that contain this
      * fragment to allow an interaction in this fragment to be communicated
@@ -136,7 +195,7 @@ public class CategoryFragment extends Fragment implements AbsListView.OnItemClic
      */
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
-        public void onFragmentInteraction(String id);
+        public void onFragmentInteraction(long id);
     }
 
 }

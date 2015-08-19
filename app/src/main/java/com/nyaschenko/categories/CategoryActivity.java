@@ -14,21 +14,37 @@ public class CategoryActivity extends AppCompatActivity implements CategoryFragm
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_category);
 
-        Fragment fragment = CategoryFragment.newInstance(-1);
+        Fragment fragment = getFragmentManager().findFragmentById(R.id.fragment_container);
+        if (fragment == null) {
+            getFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, CategoryFragment.newInstance(-1))
+                    .addToBackStack(null)
+                    .commit();
+        }
+    }
+
+    @Override
+    public void onFragmentInteraction(long id) {
+        Log.d("CATEGORY", "fragment interaction: " + id);
+        Fragment fragment = CategoryFragment.newInstance(id);
         getFragmentManager().beginTransaction()
-                .add(R.id.fragment_container, fragment)
+                .replace(R.id.fragment_container, fragment)
+                .addToBackStack(null)
                 .commit();
     }
 
     @Override
-    public void onFragmentInteraction(String id) {
-        Log.d("CATEGORY", "fragment interaction: " + id);
+    public void onBackPressed() {
+        if (getFragmentManager().getBackStackEntryCount() > 1) {
+            getFragmentManager().popBackStack();
+        } else {
+            super.onBackPressed();
+        }
     }
 
-    /*
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_category, menu);
         return true;
     }
@@ -41,10 +57,10 @@ public class CategoryActivity extends AppCompatActivity implements CategoryFragm
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_refresh) {
             return true;
         }
 
         return super.onOptionsItemSelected(item);
-    }*/
+    }
 }
