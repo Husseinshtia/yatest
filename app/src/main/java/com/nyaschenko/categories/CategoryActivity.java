@@ -17,16 +17,16 @@ public class CategoryActivity extends AppCompatActivity implements CategoryFragm
         Fragment fragment = getFragmentManager().findFragmentById(R.id.fragment_container);
         if (fragment == null) {
             getFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, CategoryFragment.newInstance(-1))
+                    .replace(R.id.fragment_container, CategoryFragment.newInstance(-1, getString(R.string.app_name)))
                     .addToBackStack(null)
                     .commit();
         }
     }
 
     @Override
-    public void onFragmentInteraction(long id) {
-        Log.d("CATEGORY", "fragment interaction: " + id);
-        Fragment fragment = CategoryFragment.newInstance(id);
+    public void onFragmentInteraction(long id, String title) {
+        Log.d("CATEGORY", "fragment clicked: " + id);
+        Fragment fragment = CategoryFragment.newInstance(id, title);
         getFragmentManager().beginTransaction()
                 .replace(R.id.fragment_container, fragment)
                 .addToBackStack(null)
@@ -58,6 +58,7 @@ public class CategoryActivity extends AppCompatActivity implements CategoryFragm
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_refresh) {
+            LoadService.startActionLoadCategories(this);
             return true;
         }
 

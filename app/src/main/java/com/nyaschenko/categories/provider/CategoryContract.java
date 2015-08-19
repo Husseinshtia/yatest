@@ -13,6 +13,7 @@ public class CategoryContract {
         String CATEGORY_TITLE = "category_title";
         String CATEGORY_ID = "category_id";
         String CATEGORY_PARENT = "category_parent";
+        String CATEGORY_HAS_SUBCATEGORIES = "category_has_subcategories";
     }
 
     public static final String CONTENT_AUTHORITY = "com.nyaschenko.categories";
@@ -29,6 +30,7 @@ public class CategoryContract {
                 CategoryColumns.CATEGORY_TITLE,
                 CategoryColumns.CATEGORY_ID,
                 CategoryColumns.CATEGORY_PARENT,
+                CategoryColumns.CATEGORY_HAS_SUBCATEGORIES
         };
 
         public static Uri buildCategoryUri(String categoryId) {

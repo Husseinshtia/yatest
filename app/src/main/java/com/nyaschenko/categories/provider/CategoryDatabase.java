@@ -29,24 +29,27 @@ public class CategoryDatabase extends SQLiteOpenHelper {
                         + BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                         + CategoryContract.CategoryColumns.CATEGORY_ID + " INTEGER, "
                         + CategoryContract.CategoryColumns.CATEGORY_TITLE + " TEXT, "
-                        + CategoryContract.CategoryColumns.CATEGORY_PARENT + " INTEGER);"
+                        + CategoryContract.CategoryColumns.CATEGORY_PARENT + " INTEGER, "
+                        + CategoryContract.CategoryColumns.CATEGORY_HAS_SUBCATEGORIES + " INTEGER NOT NULL);"
         );
 
-        db.execSQL(createEntry(123, "Products", null));
-        db.execSQL(createEntry(456, "Games", null));
-        db.execSQL(createEntry(11, "Bubbles", 2L));
-        db.execSQL(createEntry(22, "Tetris", 2L));
+        db.execSQL(createEntry(123, "Products", null, 0));
+        db.execSQL(createEntry(456, "Games", null, 1));
+        db.execSQL(createEntry(11, "Bubbles", 2L, 0));
+        db.execSQL(createEntry(22, "Tetris", 2L, 0));
     }
 
-    private static String createEntry(long id, String title, Long parentId) {
+    private static String createEntry(long id, String title, Long parentId, int hasChildren) {
         return "INSERT INTO " + Tables.CATEGORIES + "("
                 + CategoryContract.CategoryColumns.CATEGORY_ID + ", "
                 + CategoryContract.CategoryColumns.CATEGORY_TITLE + ", "
-                + CategoryContract.CategoryColumns.CATEGORY_PARENT +
+                + CategoryContract.CategoryColumns.CATEGORY_PARENT + ", "
+                + CategoryContract.CategoryColumns.CATEGORY_HAS_SUBCATEGORIES +
                 ") VALUES (" +
                 id + ", " +
                 DatabaseUtils.sqlEscapeString(title) + ", " +
-                parentId + ");";
+                parentId + ", " +
+                hasChildren + ");";
     }
 
     @Override

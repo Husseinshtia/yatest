@@ -15,8 +15,6 @@ import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.CursorAdapter;
-import android.widget.ListAdapter;
-import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
 import com.nyaschenko.categories.provider.CategoryContract;
@@ -33,20 +31,23 @@ import com.nyaschenko.categories.provider.CategoryContract;
 public class CategoryFragment extends ListFragment implements
         AbsListView.OnItemClickListener, LoaderManager.LoaderCallbacks<Cursor> {
 
-    public static final String ARG_PARENT_ID = "parent_id";
+    public static final String ARG_PARENT_ID = "arg_parent_id";
+    public static final String ARG_TITLE = "arg_title";
     private static final int LOADER_CATEGORIES = 1;
 
     private long parentId;
+    private String title;
 
     private OnFragmentInteractionListener mListener;
 
     private AbsListView mListView;
     private CursorAdapter mAdapter;
 
-    public static CategoryFragment newInstance(long parentId) {
+    public static CategoryFragment newInstance(long parentId, String title) {
         CategoryFragment fragment = new CategoryFragment();
         Bundle args = new Bundle();
         args.putLong(ARG_PARENT_ID, parentId);
+        args.putString(ARG_TITLE, title);
         fragment.setArguments(args);
         return fragment;
     }
@@ -65,6 +66,7 @@ public class CategoryFragment extends ListFragment implements
         setRetainInstance(true);
         if (getArguments() != null) {
             parentId = getArguments().getLong(ARG_PARENT_ID, -1);
+            title = getArguments().getString(ARG_TITLE, getString(R.string.app_name));
         }
     }
 
@@ -88,6 +90,13 @@ public class CategoryFragment extends ListFragment implements
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
+        Log.d("CATEGORY", "onActivityCreated");
+        if (savedInstanceState != null) {
+            parentId = savedInstanceState.getLong(ARG_PARENT_ID, -1);
+            title = savedInstanceState.getString(ARG_TITLE, getString(R.string.app_name));
+        }
+        getActivity().setTitle(title);
+
         mAdapter = new CursorAdapter(getActivity(), null, false) {
 
             @Override
@@ -101,6 +110,9 @@ public class CategoryFragment extends ListFragment implements
                 final String title = cursor.getString(cursor.getColumnIndex(CategoryContract.CategoryColumns.CATEGORY_TITLE));
                 final TextView textView = (TextView) view.findViewById(android.R.id.text1);
                 textView.setText(title);
+                if (cursor.getInt(cursor.getColumnIndex(CategoryContract.CategoryColumns.CATEGORY_HAS_SUBCATEGORIES)) == 1) {
+                    textView.setCompoundDrawablesWithIntrinsicBounds(0, 0, android.R.drawable.ic_menu_more, 0);
+                }
 
                 final String id = cursor.getString(cursor.getColumnIndex(CategoryContract.CategoryColumns.CATEGORY_ID));
                 final TextView textView2 = (TextView) view.findViewById(android.R.id.text2);
@@ -112,6 +124,14 @@ public class CategoryFragment extends ListFragment implements
 
         getLoaderManager().initLoader(LOADER_CATEGORIES, Bundle.EMPTY, this);
 
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putString(ARG_TITLE, title);
+        outState.putLong(ARG_PARENT_ID, parentId);
     }
 
     @Override
@@ -134,9 +154,12 @@ public class CategoryFragment extends ListFragment implements
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         if (null != mListener) {
-            // Notify the active callbacks interface (the activity, if the
-            // fragment is attached to one) that an item has been selected.
-            mListener.onFragmentInteraction(id);
+            Cursor cursor = mAdapter.getCursor();
+            cursor.moveToPosition(position);
+            final String title = cursor.getString(cursor.getColumnIndex(CategoryContract.CategoryColumns.CATEGORY_TITLE));
+            if (cursor.getInt(cursor.getColumnIndex(CategoryContract.CategoryColumns.CATEGORY_HAS_SUBCATEGORIES)) == 1) {
+                mListener.onFragmentInteraction(id, title);
+            }
         }
     }
 
@@ -195,7 +218,7 @@ public class CategoryFragment extends ListFragment implements
      */
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
-        public void onFragmentInteraction(long id);
+        public void onFragmentInteraction(long id, String title);
     }
 
 }

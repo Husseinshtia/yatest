@@ -44,7 +44,11 @@ public class LoadService extends IntentService {
     }
 
     private void handleActionLoadCategories() {
-        throw new UnsupportedOperationException("Not yet implemented");
+        try {
+            loadCategories();
+        } catch (IOException e) {
+            //TODO tell that smth went wrong
+        }
     }
 
     private void loadCategories() throws IOException {
@@ -67,16 +71,19 @@ public class LoadService extends IntentService {
             if (parentId != -1) {
                 cv.put(CategoryContract.CategoryColumns.CATEGORY_PARENT, parentId);
             }
-            if (node.has("id")) {
-                cv.put(CategoryContract.CategoryColumns.CATEGORY_ID, node.get("id").asLong());
+            if (category.has("id")) {
+                cv.put(CategoryContract.CategoryColumns.CATEGORY_ID, category.get("id").asLong());
             }
-            if (node.has("title")) {
-                cv.put(CategoryContract.CategoryColumns.CATEGORY_TITLE, node.get("title").textValue());
+            if (category.has("title")) {
+                cv.put(CategoryContract.CategoryColumns.CATEGORY_TITLE, category.get("title").textValue());
             }
+            final int hasSubcategories = category.has("subs") ? 1 : 0;
+            cv.put(CategoryContract.CategoryColumns.CATEGORY_HAS_SUBCATEGORIES, hasSubcategories);
+
             Uri uri = getContentResolver().insert(CategoryContract.Category.CONTENT_URI, cv);
             long id = Long.parseLong(uri.getLastPathSegment());
 
-            if (category.has("subs")) {
+            if (hasSubcategories == 1) {
                 addChildren(category.get("subs"), id);
             }
         }
