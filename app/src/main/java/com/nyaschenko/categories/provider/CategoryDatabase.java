@@ -6,9 +6,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
 
-/**
- * Created by nafanya on 13.08.15.
- */
+
 public class CategoryDatabase extends SQLiteOpenHelper {
 
     public static final String DATABASE_NAME = "categories.db";
@@ -33,10 +31,10 @@ public class CategoryDatabase extends SQLiteOpenHelper {
                         + CategoryContract.CategoryColumns.CATEGORY_HAS_SUBCATEGORIES + " INTEGER NOT NULL);"
         );
 
-        db.execSQL(createEntry(123, "Products", null, 0));
+        /*db.execSQL(createEntry(123, "Products", null, 0));
         db.execSQL(createEntry(456, "Games", null, 1));
         db.execSQL(createEntry(11, "Bubbles", 2L, 0));
-        db.execSQL(createEntry(22, "Tetris", 2L, 0));
+        db.execSQL(createEntry(22, "Tetris", 2L, 0));*/
     }
 
     private static String createEntry(long id, String title, Long parentId, int hasChildren) {

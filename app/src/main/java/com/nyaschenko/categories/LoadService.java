@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,6 +24,7 @@ public class LoadService extends IntentService {
     private static final String CATEGORIES_URL = "https://money.yandex.ru/api/categories-list";
 
     public static void startActionLoadCategories(Context context) {
+        Log.d("CATEGORY", "startActionLoadCategories");
         Intent intent = new Intent(context, LoadService.class);
         intent.setAction(ACTION_LOAD_CATEGORIES);
         context.startService(intent);
@@ -63,6 +66,9 @@ public class LoadService extends IntentService {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode node = mapper.readTree(json);
         addChildren(node, -1);
+
+        Intent intent = new Intent("update");
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
     private void addChildren(JsonNode node, long parentId) {

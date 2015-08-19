@@ -2,6 +2,7 @@ package com.nyaschenko.categories.provider;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -41,6 +42,7 @@ public class CategoryProvider extends ContentProvider {
         switch (match) {
             case CATEGORY:
                 rows = db.delete(CategoryDatabase.Tables.CATEGORIES, null, null);
+                db.delete("SQLITE_SEQUENCE", "NAME = ?", new String[]{ CategoryDatabase.Tables.CATEGORIES });//new String[]{ "'" + CategoryDatabase.DATABASE_NAME + "'" }
                 break;
             default:
                 throw new IllegalArgumentException("Illegal delete uri: " + uri);
@@ -51,8 +53,6 @@ public class CategoryProvider extends ContentProvider {
 
     @Override
     public String getType(Uri uri) {
-        // TODO: Implement this to handle requests for the MIME type of the data
-        // at the given URI.
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
@@ -104,7 +104,10 @@ public class CategoryProvider extends ContentProvider {
     @Override
     public int update(Uri uri, ContentValues values, String selection,
                       String[] selectionArgs) {
-        // TODO: Implement this to handle requests to update one or more rows.
         throw new UnsupportedOperationException("Not yet implemented");
     }
+
+    /*private void notifyChange(Uri uri) {
+        getContext().getContentResolver().notifyChange(uri, null);
+    }*/
 }

@@ -3,11 +3,16 @@ package com.nyaschenko.categories;
 import android.app.Activity;
 import android.app.ListFragment;
 import android.app.LoaderManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.CursorLoader;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.Loader;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,26 +24,20 @@ import android.widget.TextView;
 
 import com.nyaschenko.categories.provider.CategoryContract;
 
-/**
- * A fragment representing a list of Items.
- * <p/>
- * Large screen devices (such as tablets) are supported by replacing the ListView
- * with a GridView.
- * <p/>
- * Activities containing this fragment MUST implement the {@link OnFragmentInteractionListener}
- * interface.
- */
+
 public class CategoryFragment extends ListFragment implements
         AbsListView.OnItemClickListener, LoaderManager.LoaderCallbacks<Cursor> {
 
     public static final String ARG_PARENT_ID = "arg_parent_id";
     public static final String ARG_TITLE = "arg_title";
     private static final int LOADER_CATEGORIES = 1;
+    private static final String PREF_FIRST_LAUNCH = "first_launch";
 
     private long parentId;
     private String title;
 
     private OnFragmentInteractionListener mListener;
+    private BroadcastReceiver receiver;
 
     private AbsListView mListView;
     private CursorAdapter mAdapter;
@@ -68,13 +67,24 @@ public class CategoryFragment extends ListFragment implements
             parentId = getArguments().getLong(ARG_PARENT_ID, -1);
             title = getArguments().getString(ARG_TITLE, getString(R.string.app_name));
         }
+
+        checkFirstLaunch();
+    }
+
+    private void checkFirstLaunch() {
+        SharedPreferences preferences = getActivity().getPreferences(Context.MODE_PRIVATE);
+        if (preferences.getBoolean(PREF_FIRST_LAUNCH, true)) {
+            LoadService.startActionLoadCategories(getActivity());
+            SharedPreferences.Editor editor = preferences.edit();
+            editor.putBoolean(PREF_FIRST_LAUNCH, false);
+            editor.apply();
+        }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_category, container, false);
-        return view;
+        return inflater.inflate(R.layout.fragment_category, container, false);
     }
 
     @Override
@@ -90,12 +100,22 @@ public class CategoryFragment extends ListFragment implements
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        Log.d("CATEGORY", "onActivityCreated");
         if (savedInstanceState != null) {
             parentId = savedInstanceState.getLong(ARG_PARENT_ID, -1);
             title = savedInstanceState.getString(ARG_TITLE, getString(R.string.app_name));
         }
         getActivity().setTitle(title);
+
+        receiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent)  {
+                Log.d("CATEGORY", "Got broadcast update");
+                if (isAdded()) {
+                    getLoaderManager().restartLoader(LOADER_CATEGORIES, Bundle.EMPTY, CategoryFragment.this).forceLoad();
+                }
+            }
+        };
+        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(receiver, new IntentFilter("update"));
 
         mAdapter = new CursorAdapter(getActivity(), null, false) {
 
@@ -121,8 +141,10 @@ public class CategoryFragment extends ListFragment implements
         };
 
         setListAdapter(mAdapter);
+        registerForContextMenu(getListView());
 
-        getLoaderManager().initLoader(LOADER_CATEGORIES, Bundle.EMPTY, this);
+
+        getLoaderManager().initLoader(LOADER_CATEGORIES, Bundle.EMPTY, this).forceLoad();
 
     }
 
@@ -163,11 +185,6 @@ public class CategoryFragment extends ListFragment implements
         }
     }
 
-    /**
-     * The default content for this Fragment has a TextView that is shown when
-     * the list is empty. If you would like to change the text, call this method
-     * to supply the text it should use.
-     */
     public void setEmptyText(CharSequence emptyText) {
         View emptyView = mListView.getEmptyView();
 
@@ -178,6 +195,7 @@ public class CategoryFragment extends ListFragment implements
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        Log.d("CATEGORY", "onCreateLoader");
         switch (id) {
             case LOADER_CATEGORIES:
                 Log.d("CATEGORY", "parentdId: " + parentId);
@@ -198,27 +216,16 @@ public class CategoryFragment extends ListFragment implements
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        Log.d("CATEGORY", "onLoadFinished");
         mAdapter.swapCursor(data);
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
-
     }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p/>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
     public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
-        public void onFragmentInteraction(long id, String title);
+        void onFragmentInteraction(long id, String title);
     }
 
 }
